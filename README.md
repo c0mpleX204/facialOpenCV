@@ -131,10 +131,17 @@
 	若你已安装 `opencv[contrib]` 也可使用，功能不受影响。
 
 ### 获取 YuNet 模型文件
-- 访问 OpenCV Zoo YuNet 模型页面：
-	- 说明与下载（官方仓库）：https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet
-	- 直接模型文件：`face_detection_yunet.onnx`
-- 将模型文件保存到项目目录下的 `models/face_detection_yunet.onnx`。
+ - 访问 OpenCV Zoo YuNet 模型页面：
+	 - 说明与下载（官方仓库）：https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet
+	 - 直接模型文件：`face_detection_yunet.onnx`
+ - 推荐使用项目内的自动下载脚本，模型将保存到 `src/models/face_detection_yunet.onnx`：
+
+	 ```powershell
+	 # 创建(或确保)Python环境可用后，运行：
+	 python src/tools/download_yunet.py
+	 ```
+
+ - 如需手动下载，请将模型文件保存到 `src/models/face_detection_yunet.onnx`。
 
 ### 开发流程概述（图片人脸模糊/遮挡）
 1. 加载输入图片（如 `test.jpg`）。
