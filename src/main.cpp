@@ -1,5 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/dnn.hpp>
+#include "face_detector.h"
 #include <iostream>
 #include <string>
 #include <filesystem>
@@ -23,36 +24,28 @@ int main(int argc, char** argv) {
     }
 
     cv::VideoCapture cap;
-    // Try requested device first, then try 0..3
-    bool opened = false;
-    for (int d = device; d <= device + 3; ++d) {
-        cap.open(d, cv::CAP_DSHOW);
-        if (cap.isOpened()) {
-            std::cout << "Opened camera device: " << d << std::endl;
-            opened = true;
-            break;
-        }
-        // close and try next
-        cap.release();
+    // Open requested device using DirectShow on Windows; fall back to default if needed
+    cap.open(device, cv::CAP_DSHOW);
+    if (!cap.isOpened()) {
+        cap.open(device);
     }
-    if (!opened) {
-        std::cerr << "Cannot open camera. Check Windows Camera permissions or try different -device index (0,1,2...)." << std::endl;
-        std::cerr << "Also ensure no other app is using the camera and desktop apps are allowed in Settings > Privacy & security > Camera." << std::endl;
+    if (!cap.isOpened()) {
+        std::cerr << "Cannot open camera device: " << device << ". Check permissions and index." << std::endl;
         return -1;
     }
 
-    // Try to load YuNet model from models/ (user should download into models/)
-    std::string modelPath = "models/face_detection_yunet_2023mar.onnx";
+    // Try to load YuNet model from models/ (search current working dir and executable parents)
+    std::string relModel = "models/face_detection_yunet_2023mar.onnx";
     cv::dnn::Net net;
     bool hasModel = false;
     try {
-        // 1) check current working directory first
-        if (fs::exists(modelPath)) {
-            net = cv::dnn::readNet(modelPath);
+        // 1) check current working directory
+        if (fs::exists(relModel)) {
+            net = cv::dnn::readNet(relModel);
             hasModel = true;
-            std::cout << "Loaded model from cwd: " << modelPath << std::endl;
+            std::cout << "Loaded model from cwd: " << relModel << std::endl;
         } else {
-            // 2) search upward from executable directory for a models/ folder
+            // 2) search upward from executable path for a models/ folder
             fs::path exePath = fs::absolute(argv[0]);
             fs::path cur = exePath.parent_path();
             bool found = false;
@@ -62,14 +55,13 @@ int main(int argc, char** argv) {
                     net = cv::dnn::readNet(candidate.string());
                     hasModel = true;
                     found = true;
-                    modelPath = candidate.string();
                     std::cout << "Loaded model from: " << candidate.string() << std::endl;
                     break;
                 }
                 cur = cur.parent_path();
             }
             if (!found) {
-                std::cout << "Model not found at '" << modelPath << "' or in parent dirs. Running without detection." << std::endl;
+                std::cout << "Model not found at '" << relModel << "' or in parent dirs. Running without detection." << std::endl;
             }
         }
         if (hasModel) {
@@ -81,23 +73,12 @@ int main(int argc, char** argv) {
     }
 
     cv::Mat frame;
-    int frameCount = 0;
     for (;;) {
-        bool ok = cap.read(frame);
-        if (!ok || frame.empty()) {
-            // don't exit; show placeholder and continue
-            frame = cv::Mat(480, 640, CV_8UC3, cv::Scalar(80, 80, 80));
-            cv::putText(frame, "No frame from camera (check permissions or index)", cv::Point(10,30), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(0,0,255), 2);
-            std::cout << "Warning: failed to read frame from camera." << std::endl;
-        } else {
-            if ((frameCount++ % 150) == 0) {
-                std::cout << "Frame size: " << frame.cols << "x" << frame.rows << std::endl;
-            }
-        }
+        cap >> frame;
+        if (frame.empty()) break;
 
         if (hasModel) {
-            // Placeholder: user will replace with actual YuNet preprocessing + inference
-            // For now, just display frame and a notice
+            // Placeholder: later will implement proper YuNet preprocessing + inference
             cv::putText(frame, "YuNet model loaded (placeholder detection)", cv::Point(10,30), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0,255,0), 2);
         } else {
             cv::putText(frame, "Model missing: place ONNX in models/", cv::Point(10,30), cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0,0,255), 2);
@@ -108,9 +89,30 @@ int main(int argc, char** argv) {
         cv::putText(frame, info, cv::Point(10, frame.rows - 10), cv::FONT_HERSHEY_SIMPLEX, 0.6, cv::Scalar(255,255,255), 2);
 
         cv::imshow("privacy_protector", frame);
-        int key = cv::waitKey(30);
+        int key = cv::waitKey(1);
         if (key == 27) break; // ESC
     }
+    FaceDetector detector(320,320,0.5f);
+    bool hasModel=false;
+    if(fs::exists(relModel)){
+        hasModel=detector.loadModel(relModel);
+    }else{
+
+    }
+    for(;;){
+        cap>>frame;
+        if(frame.empty()) break;
+        if(hasModel){
+            auto boxes=detector.detect(frame);
+            for(const auto &r:boxes){
+                cv::rectangle(frame,r,cv::Scalar(0,255,0),2);
+
+            }
+        }else{
+            cv::putText(frame,"Model missing: place ONNX in models/",cv::Point(10,30),cv::FONT_HERSHEY_SIMPLEX,0.7,cv::Scalar(0,0,255),2);
+        }
+    }
+
 
     return 0;
 }
