@@ -161,6 +161,10 @@ int main(int argc, char** argv) {
             std::string path;
             std::cout<<"Enter mask image path: ";
             std::cin>>path;
+
+            if (!path.empty() && path.front() == '"') path.erase(0, 1);
+            if (!path.empty() && path.back() == '"') path.pop_back();
+            
             cv::Mat temp=cv::imread(path,cv::IMREAD_UNCHANGED);
             if(!temp.empty()){
                 maskImg=temp;
@@ -169,13 +173,6 @@ int main(int argc, char** argv) {
             }else{
                 std::cout<<"Failed to load image: "<<path<<std::endl;
             }
-        }
-        
-        if(!temp.empty()){
-            maskImg=temp;
-            std::cout<<"Image loaded successfully"<<std::endl;
-        }else{
-            std::cout<<"Failed to load image: "<<path<<std::endl;
         }
     }
 
