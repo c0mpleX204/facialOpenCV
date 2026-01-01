@@ -76,8 +76,8 @@ int main(int argc, char** argv) {
                 cv::Rect faceRect = r & cv::Rect(0, 0, frame.cols, frame.rows);
                 if(validRect.area() <=0) continue;
                 if(enablePrivacy){
-                    if(mode="blur"){
-                        applyBlur
+                    if(mode=="blur"){
+                        applyBlur()(frame, faceRect, blur_size);
                     }
                 }
                 else{cv::rectangle(frame,r,cv::Scalar(0,255,0),2);}
