@@ -30,9 +30,9 @@ std::vector<cv::Rect> FaceDetector::detect(const cv::Mat& frame){
     det_->setInputSize(cv::Size(inputW_, inputH_));
 
     // debug: print sizes to ensure we pass the resized image
-    std::cout << "detect(): frame.size()=" << frame.cols << "x" << frame.rows
-              << " input_resized.size()=" << input_resized.cols << "x" << input_resized.rows
-              << " expected=" << inputW_ << "x" << inputH_ << std::endl;
+    // std::cout << "detect(): frame.size()=" << frame.cols << "x" << frame.rows
+    //           << " input_resized.size()=" << input_resized.cols << "x" << input_resized.rows
+    //           << " expected=" << inputW_ << "x" << inputH_ << std::endl;
 
     cv::Mat faces;
     det_->detect(input_resized, faces);

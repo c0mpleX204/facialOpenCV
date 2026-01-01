@@ -12,6 +12,33 @@ void applyBlur(cv::Mat& frame, const cv::Rect& face,int blurSize){
     cv::Mat roi=frame(face);
     cv::GaussianBlur(roi,roi,cv::Size(k,k),0);
 }
+void applyPixelation(cv::Mat& frame, const cv::Rect& face, int pixelSize){
+    int p=std::max(1,pixelSize);
+    cv::Mat roi=frame(face);
+    cv::Mat small;
+    cv::resize(roi,small,cv::Size(roi.cols/p,roi.rows/p),0,0,cv::INTER_LINEAR);
+    cv::resize(small,roi,roi.size(),0,0,cv::INTER_NEAREST);
+}
+void applyMask(cv::Mat& frame,const cv::Rect& face,const cv::Mat& maskImage){
+    if(maskImage.empty()) return;
+    cv::Mat resizedMask;
+    cv::resize(maskImage,resizedMask,face.size());
+    cv::Mat roi =frame(face);
+    if(resizedMask.channels()==4){
+        std::vector<cv::Mat> channels;
+        cv::split(resizedMask,channels);
+        cv::Mat alpha=channels[3];
+
+        std::vector<cv::Mat> bgrChannels={channels[0],channels[1],channels[2]};
+        cv::Mat bgrMask;
+        cv::merge(bgrChannels,bgrMask);
+        bgrMask.copyTo(roi,alpha);
+
+    }
+    else{
+        resizedMask.copyTo(roi);
+    }
+}
 int main(int argc, char** argv) {
     bool enablePrivacy = false;
     std::string mode = "blur";
@@ -66,6 +93,8 @@ int main(int argc, char** argv) {
         }
     }
     
+    std::string mask_image_default="image/qianzaoaiyin.png";
+    cv::Mat maskImg=cv::imread(mask_image.empty()?mask_image_default:mask_image,cv::IMREAD_UNCHANGED);
     cv::Mat frame;
     for(;;){
         cap>>frame;
@@ -74,10 +103,15 @@ int main(int argc, char** argv) {
             auto boxes=detector.detect(frame);
             for(const auto &r:boxes){
                 cv::Rect faceRect = r & cv::Rect(0, 0, frame.cols, frame.rows);
-                if(validRect.area() <=0) continue;
+                if(faceRect.area() <=0) continue;
                 if(enablePrivacy){
                     if(mode=="blur"){
-                        applyBlur()(frame, faceRect, blur_size);
+                        applyBlur(frame, faceRect, blur_size);
+                    }else if(mode=="pixelate"){
+                        applyPixelation(frame, faceRect, pixel_size);
+                    }else if(mode=="mask"){
+                        applyMask(frame, faceRect, maskImg);
+                        
                     }
                 }
                 else{cv::rectangle(frame,r,cv::Scalar(0,255,0),2);}
@@ -85,12 +119,23 @@ int main(int argc, char** argv) {
             std::string statusText=enablePrivacy?("Privacy ON(" +mode+ ")"):"Privacy OFF";
             cv::Scalar statusColor =enablePrivacy?cv::Scalar(0,0,255):cv::Scalar(0,255,0);
             cv::putText(frame,statusText,cv::Point(10,30),cv::FONT_HERSHEY_SIMPLEX,0.7,statusColor,2);
+
+            std::string paramText="";
+            if(enablePrivacy){
+                if(mode=="blur"){
+                    paramText="Blur Size: " + std::to_string(blur_size);
+                }else if(mode=="pixelate"){
+                    paramText="Pixel Size: " + std::to_string(pixel_size);
+                }else if(mode=="mask"){
+                    paramText="Mask Image: " + mask_image;
+                }
+                cv::putText(frame,paramText,cv::Point(10,60),cv::FONT_HERSHEY_SIMPLEX,0.6,cv::Scalar(255,255,0),1);
+            }
         }else{
             cv::putText(frame,"Model missing",cv::Point(10,30),cv::FONT_HERSHEY_SIMPLEX,0.7,cv::Scalar(0,0,255),2);
         }
 
-
-        std::string info ="[Q]Toggle Privacy | [ [ / ] ] Adjust Blur: " + std::to_string(blur_size);
+        std::string info ="[Q]Toggle Privacy|[1]Blur [2]Pixel [3]Mask | [ [ / ] ] Adjust Blur/Pixel: " ;
         cv::putText(frame,info,cv::Point(10,frame.rows-10),cv::FONT_HERSHEY_SIMPLEX,0.6,cv::Scalar(255,255,255),1);
 
         cv::imshow("Privacy Protector",frame);
@@ -99,12 +144,38 @@ int main(int argc, char** argv) {
 
         if(key=='q' || key=='Q'){
             enablePrivacy = !enablePrivacy;
-    }
+        }
+        if(key=='1') mode="blur";
+        if(key=='2') mode="pixelate";
+        if(key=='3') mode="mask";
         if(key=='[' && blur_size>1){
-            blur_size=std::max(1,blur_size-4);
+            if(mode=="blur")blur_size=std::max(1,blur_size-4);
+            if(mode=="pixelate")pixel_size=std::max(1,pixel_size-2);
         }
         if(key==']'){
-            blur_size+=4;
+            if(mode=="blur")blur_size+=4;
+            if(mode=="pixelate")pixel_size+=2;
+        }
+        
+        if(key=='u'||key=='U'){
+            std::string path;
+            std::cout<<"Enter mask image path: ";
+            std::cin>>path;
+            cv::Mat temp=cv::imread(path,cv::IMREAD_UNCHANGED);
+            if(!temp.empty()){
+                maskImg=temp;
+                mask_image=path;
+                std::cout<<"Image loaded successfully"<<std::endl;
+            }else{
+                std::cout<<"Failed to load image: "<<path<<std::endl;
+            }
+        }
+        
+        if(!temp.empty()){
+            maskImg=temp;
+            std::cout<<"Image loaded successfully"<<std::endl;
+        }else{
+            std::cout<<"Failed to load image: "<<path<<std::endl;
         }
     }
 
