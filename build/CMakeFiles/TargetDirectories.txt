@@ -1,4 +1,3 @@
 C:/Users/lenovo/Desktop/mycode/AdvanceProgramProject/facialOpenCV/build/CMakeFiles/privacy_protector.dir
-C:/Users/lenovo/Desktop/mycode/AdvanceProgramProject/facialOpenCV/build/CMakeFiles/scan_cameras.dir
 C:/Users/lenovo/Desktop/mycode/AdvanceProgramProject/facialOpenCV/build/CMakeFiles/ALL_BUILD.dir
 C:/Users/lenovo/Desktop/mycode/AdvanceProgramProject/facialOpenCV/build/CMakeFiles/ZERO_CHECK.dir

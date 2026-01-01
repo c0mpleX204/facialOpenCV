@@ -24,7 +24,7 @@ Detection: Cascade Classifier vs. YuNet
 功能 1：实时人脸检测
 加载 YuNet 模型并在每帧图像中检测到人脸并返回检测框。
 自行设置默认阈值（如nms，置信度等）尽可能的检测到图像中的所有人脸。
-参考C++代码实现： face_detecttion_yunet。
+参考C++代码实现： face_detecttion_yunet。 
 功能 2：隐私保护模式
 模式 1：模糊处理
 使用高斯模糊（ cv::GaussianBlur ）对人脸区域进行模糊处理。

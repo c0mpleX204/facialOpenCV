@@ -1,6 +1,7 @@
 #pragma once
 #include<opencv2/opencv.hpp>
 #include<opencv2/dnn.hpp>
+#include<opencv2/face.hpp>
 #include<vector>
 #include<string>
 class FaceDetector{
@@ -9,10 +10,10 @@ class FaceDetector{
         bool loadModel(const std::string& modelPath);
         std::vector<cv::Rect> detect(const cv::Mat& frame);
     private:
-        cv::dnn::Net net;
         int inputW_;
         int inputH_;
         float confThresh_;
         bool loaded_;
+        cv::Ptr<cv::FaceDetectorYN> det_;
 
 };

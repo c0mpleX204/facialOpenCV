@@ -4,6 +4,9 @@
     <ClCompile Include="C:\Users\lenovo\Desktop\mycode\AdvanceProgramProject\facialOpenCV\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\lenovo\Desktop\mycode\AdvanceProgramProject\facialOpenCV\src\face_detector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="C:\Users\lenovo\Desktop\mycode\AdvanceProgramProject\facialOpenCV\CMakeLists.txt" />
